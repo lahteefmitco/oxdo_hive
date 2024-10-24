@@ -1,4 +1,3 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -99,8 +98,11 @@ class _MyHomePageState extends State<MyHomePage> {
                     return ListView.separated(
                         itemBuilder: (context, index) {
                           final person = values[index];
-                          return ListTile(
-                            title: Text(person.name),
+                          return Card(
+                            child: ListTile(
+                              title: Text("Name:- ${person.name}"),
+                              subtitle: Text("Age:- ${person.age}"),
+                            ),
                           );
                         },
                         separatorBuilder: (context, index) {

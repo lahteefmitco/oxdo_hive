@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:oxdo_hive/person/person.dart';
@@ -45,10 +44,52 @@ class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
 
-  void _addData(Person person) {
-    boxPerson.add(person);
+  final _nameFocusNode = FocusNode();
+  final _ageFocus = FocusNode();
+
+  SaveButtonMode _saveButtonMode = SaveButtonMode.save;
+  int? _indexToUpdate;
+
+  void _addPerson(Person person) async {
+    await boxPerson.add(person);
     _nameController.clear();
     _ageController.clear();
+
+    _unFocusAllFocusNode();
+  }
+
+  void _bringPersonToUpdate(Person person, int index) async {
+    _nameController.text = person.name;
+    _ageController.text = person.age.toString();
+
+    _indexToUpdate = index;
+
+    _saveButtonMode = SaveButtonMode.edit;
+
+    setState(() {});
+  }
+
+// Update person
+  void _updatePerson(Person person) async {
+    await boxPerson.putAt(_indexToUpdate!, person);
+    _nameController.clear();
+    _ageController.clear();
+    _saveButtonMode = SaveButtonMode.save;
+    _indexToUpdate = null;
+    setState(() {});
+    _unFocusAllFocusNode();
+
+  }
+
+  // delete person
+  void _deletePerson(int index) async {
+    await boxPerson.deleteAt(index);
+  }
+
+  // un focus text fields,  hide keyboard
+  void _unFocusAllFocusNode() {
+    _nameFocusNode.unfocus();
+    _ageFocus.unfocus();
   }
 
   @override
@@ -66,6 +107,7 @@ class _MyHomePageState extends State<MyHomePage> {
             children: <Widget>[
               TextField(
                 controller: _nameController,
+                focusNode: _nameFocusNode,
                 decoration: const InputDecoration(border: OutlineInputBorder()),
               ),
               const SizedBox(
@@ -73,6 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               TextField(
                 controller: _ageController,
+                focusNode: _ageFocus,
                 decoration: const InputDecoration(border: OutlineInputBorder()),
                 keyboardType: TextInputType.number,
               ),
@@ -81,11 +124,26 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  final person = Person(_nameController.text.trim(),
-                      int.tryParse(_ageController.text.trim()) ?? 0);
-                  _addData(person);
+                  if (_saveButtonMode == SaveButtonMode.save) {
+                    // To save
+                    final person = Person(_nameController.text.trim(),
+                        int.tryParse(_ageController.text.trim()) ?? 0);
+                    _addPerson(person);
+                  } else {
+                    // To update
+                    final person = Person(_nameController.text.trim(),
+                        int.tryParse(_ageController.text.trim()) ?? 0);
+                    _updatePerson(person);
+                  }
                 },
-                child: const Text("Save"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _saveButtonMode == SaveButtonMode.save
+                      ? Colors.green
+                      : Colors.blue,
+                  foregroundColor: Colors.white,
+                ),
+                child: Text(
+                    _saveButtonMode == SaveButtonMode.save ? "Save" : "Update"),
               ),
               const SizedBox(
                 height: 8,
@@ -102,6 +160,25 @@ class _MyHomePageState extends State<MyHomePage> {
                             child: ListTile(
                               title: Text("Name:- ${person.name}"),
                               subtitle: Text("Age:- ${person.age}"),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    onPressed: () {
+                                      // take data to update
+                                      _bringPersonToUpdate(person, index);
+                                    },
+                                    icon: const Icon(Icons.edit),
+                                  ),
+                                  IconButton(
+                                    onPressed: () async {
+                                      _deletePerson(index);
+                                    },
+                                    color: Colors.red,
+                                    icon: const Icon(Icons.delete),
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         },
@@ -123,7 +200,13 @@ class _MyHomePageState extends State<MyHomePage> {
   void dispose() async {
     _nameController.dispose();
     _ageController.dispose();
+
+    _nameFocusNode.dispose();
+    _ageFocus.dispose();
+
     await boxPerson.close();
     super.dispose();
   }
 }
+
+enum SaveButtonMode { save, edit }

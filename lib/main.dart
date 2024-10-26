@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:oxdo_hive/person/person.dart';
 
+// Declare variable globaly
 late final Box<Person> boxPerson;
+
 void main() async {
   // Initialize Hive and register adapters if needed
   await Hive.initFlutter();
@@ -19,7 +21,6 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -50,6 +51,7 @@ class _MyHomePageState extends State<MyHomePage> {
   SaveButtonMode _saveButtonMode = SaveButtonMode.save;
   int? _indexToUpdate;
 
+  // add data
   void _addPerson(Person person) async {
     await boxPerson.add(person);
     _nameController.clear();
@@ -78,7 +80,6 @@ class _MyHomePageState extends State<MyHomePage> {
     _indexToUpdate = null;
     setState(() {});
     _unFocusAllFocusNode();
-
   }
 
   // delete person
@@ -105,23 +106,38 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
+              // name text field
               TextField(
                 controller: _nameController,
                 focusNode: _nameFocusNode,
-                decoration: const InputDecoration(border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  label: Text("Name"),
+                  hintText: "Enter name",
+                  hintStyle: TextStyle(color: Colors.black38),
+                ),
               ),
               const SizedBox(
                 height: 8,
               ),
+
+              // age textfield
               TextField(
                 controller: _ageController,
                 focusNode: _ageFocus,
-                decoration: const InputDecoration(border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  label: Text("Age"),
+                  hintText: "Enter age",
+                  hintStyle: TextStyle(color: Colors.black38),
+                ),
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(
                 height: 8,
               ),
+
+              // save or update button
               ElevatedButton(
                 onPressed: () {
                   if (_saveButtonMode == SaveButtonMode.save) {
@@ -148,47 +164,50 @@ class _MyHomePageState extends State<MyHomePage> {
               const SizedBox(
                 height: 8,
               ),
+
+              // person list
               Expanded(
                 child: ValueListenableBuilder(
                   valueListenable: boxPerson.listenable(),
                   builder: (context, Box<Person> box, _) {
                     final values = box.values.toList().cast<Person>();
                     return ListView.separated(
-                        itemBuilder: (context, index) {
-                          final person = values[index];
-                          return Card(
-                            child: ListTile(
-                              title: Text("Name:- ${person.name}"),
-                              subtitle: Text("Age:- ${person.age}"),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    onPressed: () {
-                                      // take data to update
-                                      _bringPersonToUpdate(person, index);
-                                    },
-                                    icon: const Icon(Icons.edit),
-                                  ),
-                                  IconButton(
-                                    onPressed: () async {
-                                      _deletePerson(index);
-                                    },
-                                    color: Colors.red,
-                                    icon: const Icon(Icons.delete),
-                                  ),
-                                ],
-                              ),
+                      itemBuilder: (context, index) {
+                        final person = values[index];
+                        return Card(
+                          child: ListTile(
+                            title: Text("Name:- ${person.name}"),
+                            subtitle: Text("Age:- ${person.age}"),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  onPressed: () {
+                                    // take data to update
+                                    _bringPersonToUpdate(person, index);
+                                  },
+                                  icon: const Icon(Icons.edit),
+                                ),
+                                IconButton(
+                                  onPressed: () async {
+                                    _deletePerson(index);
+                                  },
+                                  color: Colors.red,
+                                  icon: const Icon(Icons.delete),
+                                ),
+                              ],
                             ),
-                          );
-                        },
-                        separatorBuilder: (context, index) {
-                          return const Divider();
-                        },
-                        itemCount: values.length);
+                          ),
+                        );
+                      },
+                      separatorBuilder: (context, index) {
+                        return const Divider();
+                      },
+                      itemCount: values.length,
+                    );
                   },
                 ),
-              )
+              ),
             ],
           ),
         ),
@@ -204,6 +223,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _nameFocusNode.dispose();
     _ageFocus.dispose();
 
+    // To free up resources
     await boxPerson.close();
     super.dispose();
   }
